@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>my ip address</title>
+    <!-- load tailwind css for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ensure the font is clear and simple */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400,700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* set background to pure white and text to pure black for monochrome look */
+            background-color: #FFFFFF;
+            color: #000000;
+        }
+        /* forces heavy scroll */
+        .min-h-screen-plus {
+            min-height: 200vh;
+        }
+        /* custom styles for the button for better visual feedback */
+        .open-button {
+            padding: 0.5rem 1rem;
+            background-color: #f3f4f6; /* light gray */
+            color: #1f2937; /* dark gray */
+            border: 1px solid #d1d5db;
+            transition: all 0.2s;
+        }
+        .open-button:hover {
+            background-color: #e5e7eb; /* slightly darker on hover */
+            border-color: #9ca3af;
+        }
+        /* Monochrome focus ring */
+        .focus-black:focus {
+            outline: 2px solid #000000;
+            outline-offset: 2px;
+            box-shadow: none;
+            border-color: #000000;
+        }
+    </style>
+</head>
+<body class="bg-white text-black flex flex-col items-center p-4 min-h-screen-plus">
+
+    <!-- main container for the ip display - always visible at the top -->
+    <div id="ip-container" class="text-center p-6 rounded-xl mt-[20vh] w-full max-w-xl">
+        <div class="flex flex-col items-center justify-center space-y-4">
+            <!-- ip address only -->
+            <div class="flex items-center">
+                <p id="ip-display" class="text-3xl sm:text-6xl font-bold tracking-tight font-mono text-black">loading...</p>
+            </div>
+            <!-- Changed text below IP -->
+            <p class="text-xs sm:text-base text-gray-500">ip address</p>
+        </div>
+    </div>
+    
+    <!-- large spacer to force user to scroll all the way down -->
+    <div class="h-[100vh] w-full"></div>
+
+    <!-- login container - appears after scrolling -->
+    <div class="w-full flex flex-col items-center pb-12">
+        
+        <!-- login toggle button - visible by default in this section -->
+        <button id="show-login-button" class="bg-black text-white p-3 rounded-lg font-bold hover:bg-gray-800 transition duration-200 shadow-xl text-sm whitespace-nowrap">
+            log in
+        </button>
+
+        <!-- login form section - hidden initially -->
+        <section id="login-section" class="w-full max-w-xs sm:max-w-sm p-6 bg-white rounded-xl shadow-2xl border border-black mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 text-center">admin login</h2>
+            
+            <div class="space-y-4">
+                <!-- Username/Password Login -->
+                <p class="text-sm font-bold text-center text-gray-800">standard login</p>
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">username</label>
+                    <input type="text" id="username" class="w-full p-2 border border-gray-300 rounded-lg focus-black transition duration-150" placeholder="enter username">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">password</label>
+                    <!-- password input with eye icon toggle -->
+                    <div class="relative">
+                        <input type="password" id="password" class="w-full p-2 border border-gray-300 rounded-lg focus-black transition duration-150 pr-10" placeholder="••••••••">
+                        <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-black">
+                            <!-- eye icon (initially closed) -->
+                            <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.75 9.75 0 0 0 5.62-1.76"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                            <!-- eye open icon (initially hidden) -->
+                            <svg id="eye-on-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye hidden"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="login-button" class="w-full bg-black text-white p-2.5 rounded-lg font-bold hover:bg-gray-800 transition duration-200 shadow-md">
+                    sign in
+                </button>
+                
+            </div>
+
+            <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden">wrong credentials twin 😔 try again</p>
+        </section>
+
+        <!-- admin dashboard hidden until successful login -->
+        <div id="admin-dashboard" class="mt-16 w-full max-w-3xl hidden p-4 bg-white rounded-xl shadow-2xl border border-black">
+            <p class="text-3xl font-bold text-black mb-6 text-center">welcome admin 🫡</p>
+            
+            <!-- Download Button Section (Quick Code Button removed) -->
+            <div class="flex justify-center mb-6 space-x-4">
+                <button id="show-download-modal-button" class="bg-black text-white p-2 rounded-lg font-bold hover:bg-gray-800 transition duration-200 shadow-md text-sm whitespace-nowrap">
+                    download html 📥
+                </button>
+                <button id="logout-button" class="bg-red-500 text-white p-2 rounded-lg font-bold hover:bg-red-600 transition duration-200 shadow-md text-sm whitespace-nowrap">
+                    log out 🚪
+                </button>
+            </div>
+            <!-- END SECTION -->
+
+            <h3 class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">visitor history log</h3>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm">
+                    <thead>
+                        <tr>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ip</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">location</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">device</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">vpn/proxy</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">time (latest)</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="visitor-list" class="divide-y divide-gray-100">
+                        <tr><td colspan="6" class="px-3 py-4 text-sm text-gray-500 italic text-center">loading history...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p id="current-user-id" class="text-xs mt-6 text-gray-400 text-right">user id: </p>
+        </div>
+    </div>
+
+    <!-- Modal for detailed visitor info -->
+    <div id="visitor-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 border border-black">
+            <h3 class="text-xl font-bold mb-4 border-b border-gray-300 pb-2">visitor details</h3>
+            <div id="modal-content" class="space-y-3 text-sm">
+                <!-- details will be injected here -->
+            </div>
+            
+            <!-- GEMINI FEATURE SECTION -->
+            <div class="mt-6 pt-4 border-t border-gray-300">
+                <button id="analyze-ip-button" class="w-full bg-black text-white p-2 rounded-lg hover:bg-gray-800 font-bold transition duration-200 flex items-center justify-center space-x-2">
+                    <span class="text-xl">✨</span>
+                    <span>Analyze IP Profile (Gemini AI)</span>
+                </button>
+                <div id="analysis-output" class="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-800 text-xs italic hidden">
+                    <!-- Analysis content will be injected here -->
+                </div>
+                <p id="analysis-loading" class="mt-4 text-center text-sm text-black hidden">analyzing ip... please wait 🧠</p>
+                <p id="analysis-error" class="mt-4 text-center text-sm text-red-500 hidden"></p>
+            </div>
+            <!-- END GEMINI FEATURE SECTION -->
+
+            <button id="close-modal-button" class="mt-6 w-full bg-black text-white p-2 rounded-lg hover:bg-gray-800 font-medium transition duration-200">
+                close
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal for HTML Download Password Check -->
+    <div id="download-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 border border-black">
+            <h3 class="text-xl font-bold mb-4 text-center border-b border-gray-300 pb-2">secure download</h3>
+            
+            <p class="text-sm text-center mb-4 text-gray-600">enter the authorization key to download the source file.</p>
+            <div>
+                <label for="download-key" class="block text-sm font-medium text-gray-700 mb-1">authorization key</label>
+                <input type="password" id="download-key" class="w-full p-2 border border-gray-300 rounded-lg text-center font-mono tracking-widest text-lg focus-black transition duration-150" placeholder="•••••••••">
+            </div>
+            <button id="submit-download-button" class="mt-4 w-full bg-black text-white p-2.5 rounded-lg font-bold hover:bg-gray-800 transition duration-200 shadow-md">
+                authorize & download
+            </button>
+            <p id="download-error" class="text-red-500 text-sm mt-3 text-center hidden">access denied 🚫 wrong key.</p>
+
+            <button id="close-download-modal-button" class="mt-6 w-full bg-black text-white p-2 rounded-lg hover:bg-gray-800 font-medium transition duration-200">
+                cancel
+            </button>
+        </div>
+    </div>
+    <!-- END DOWNLOAD MODAL -->
+
+    <script type="module">
+        // firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // removed getDoc and setDoc as Quick Code logic is removed
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // DOM elements
+        const ipDisplay = document.getElementById('ip-display');
+        const loginSection = document.getElementById('login-section');
+        const showLoginButton = document.getElementById('show-login-button');
+        const loginSubmitButton = document.getElementById('login-button');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const visitorListBody = document.getElementById('visitor-list');
+        const currentUserIdDisplay = document.getElementById('current-user-id');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('toggle-password');
+        const eyeOnIcon = document.getElementById('eye-on-icon');
+        const eyeOffIcon = document.getElementById('eye-off-icon');
+        const loginError = document.getElementById('login-error');
+        
+        // Visitor Modal elements
+        const visitorModal = document.getElementById('visitor-modal');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const modalContent = document.getElementById('modal-content');
+        
+        // Gemini elements
+        const analyzeIpButton = document.getElementById('analyze-ip-button');
+        const analysisOutput = document.getElementById('analysis-output');
+        const analysisLoading = document.getElementById('analysis-loading');
+        const analysisError = document.getElementById('analysis-error');
+        
+        // Download Modal Elements
+        const showDownloadModalButton = document.getElementById('show-download-modal-button');
+        const downloadModal = document.getElementById('download-modal');
+        const downloadKeyInput = document.getElementById('download-key');
+        const submitDownloadButton = document.getElementById('submit-download-button');
+        const downloadError = document.getElementById('download-error');
+        const closeDownloadModalButton = document.getElementById('close-download-modal-button');
+
+        // Log Out Button
+        const logoutButton = document.getElementById('logout-button');
+
+        // hardcoded credentials
+        const adminUser = 'Admin'; 
+        const adminPass = 'Admin67';
+        // Download Authorization Key
+        const downloadPassword = '67067@1';
+
+        // global data storage
+        let currentVisitorData = null; 
+        let visitorLogs = {}; 
+        let currentModalLog = null; 
+        
+        // firebase setup
+        let db;
+        let auth;
+        let userId;
+        let appId;
+
+        // GEMINI API CONFIGURATION
+        const apiKey = ""; // Leave as-is
+        const geminiModel = 'gemini-2.5-flash-preview-09-2025';
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`;
+
+        
+        // --- HELPER FUNCTION: SET UP ADMIN STATE ---
+        function setAdminMode() {
+            loginSection.classList.add('hidden');
+            adminDashboard.classList.remove('hidden');
+            showLoginButton.classList.add('hidden'); 
+            loginError.classList.add('hidden');
+            loadVisitorHistory();
+        }
+
+        // --- HELPER FUNCTION: RESET UI STATE AFTER LOGOUT ---
+        function resetAppState() {
+            adminDashboard.classList.add('hidden');
+            loginSection.classList.add('hidden'); // Hide the form too
+            showLoginButton.classList.remove('hidden'); // Show the login toggle button
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            currentUserIdDisplay.textContent = `user id: `;
+            visitorListBody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-sm text-gray-500 italic text-center">loading history...</td></tr>';
+        }
+
+        // --- HELPER FUNCTION: ISP CHECK FOR VPN/CLOUD DETECTION ---
+        function isKnownVpnIsp(ispName) {
+            if (!ispName) return false;
+            const lowerIsp = ispName.toLowerCase();
+            const vpnIspList = ['amazon', 'google cloud', 'digitalocean', 'vultr', 'cloudflare', 'linode', 'hetzner', 'ovh', 'microsoft azure', 'vpn', 'telecom'];
+            return vpnIspList.some(keyword => lowerIsp.includes(keyword));
+        }
+
+        // --- HELPER FUNCTION: PARSE USER AGENT ---
+        function parseUserAgent(uaString) {
+            const result = { os: 'Unknown OS', browser: 'Unknown Browser', device: 'Desktop' };
+            const lowerUA = uaString.toLowerCase();
+
+            // 1. Determine OS
+            if (lowerUA.includes('android')) { result.os = 'Android'; result.device = 'Mobile'; }
+            else if (lowerUA.includes('iphone') || lowerUA.includes('ipad')) { result.os = 'iOS/iPadOS'; result.device = 'Mobile'; }
+            else if (lowerUA.includes('windows')) { result.os = 'Windows'; }
+            else if (lowerUA.includes('macintosh') || lowerUA.includes('mac os x')) { result.os = 'macOS'; }
+            else if (lowerUA.includes('linux')) { result.os = 'Linux'; }
+
+            // 2. Determine Browser (better parsing)
+            if (lowerUA.includes('crios')) { result.browser = 'Chrome (iOS)'; }
+            else if (lowerUA.includes('chrome') && !lowerUA.includes('chromium') && !lowerUA.includes('edg')) { result.browser = 'Chrome'; }
+            else if (lowerUA.includes('firefox')) { result.browser = 'Firefox'; }
+            else if (lowerUA.includes('safari') && !lowerUA.includes('chrome')) { result.browser = 'Safari'; }
+            else if (lowerUA.includes('edg')) { result.browser = 'Edge'; }
+            else if (lowerUA.includes('opr') || lowerUA.includes('opera')) { result.browser = 'Opera'; }
+
+            // 3. Refine Device Type
+            if (lowerUA.includes('mobi') || result.os.includes('iOS')) {
+                result.device = 'Mobile';
+            } else if (lowerUA.includes('ipad') || lowerUA.includes('tablet')) {
+                result.device = 'Tablet';
+            }
+
+            return {
+                deviceSummary: `${result.device} (${result.os})`,
+                browser: result.browser
+            };
+        }
+        
+        // --- CORE FUNCTIONS ---
+
+        // 1. ip and location fetching
+        async function fetchIpAndLocation() {
+            const ipUrl = 'https://api.ipify.org?format=json';
+            let currentIp = null;
+
+            try {
+                const response = await fetch(ipUrl);
+                if (!response.ok) throw new Error(`http error status: ${response.status}`);
+                const data = await response.json();
+                currentIp = data.ip;
+            } catch (error) {
+                console.error('failed to fetch ip', error);
+            }
+
+            let locationData = { city: 'N/A', regionName: 'N/A', country: 'N/A', countryCode: 'N/A', isp: 'N/A', hosting: false };
+            if (currentIp) {
+                const locationUrl = `https://ip-api.com/json/${currentIp}?fields=status,country,countryCode,city,isp,hosting`; 
+                try {
+                    const response = await fetch(locationUrl);
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        locationData = {
+                            city: data.city || 'N/A',
+                            regionName: data.regionName || 'N/A', 
+                            country: data.country || 'N/A',
+                            countryCode: data.countryCode || 'N/A',
+                            isp: data.isp || 'N/A',
+                            hosting: data.hosting || false,
+                        };
+                    }
+                } catch (error) {
+                    console.error('failed to fetch location and hosting data', error);
+                }
+            }
+
+            if (currentIp) {
+                ipDisplay.textContent = `IP: ${currentIp}`;
+                ipDisplay.classList.add('text-black');
+                ipDisplay.classList.remove('text-red-600', 'text-4xl');
+            } else {
+                ipDisplay.textContent = 'could not find ip address 😔';
+                ipDisplay.classList.add('text-red-600', 'text-4xl');
+                ipDisplay.classList.remove('text-6xl', 'text-black');
+            }
+            
+            const userAgent = navigator.userAgent;
+            const parsedDeviceData = parseUserAgent(userAgent);
+
+            return {
+                ip: currentIp,
+                ...locationData,
+                ...parsedDeviceData,
+                userAgent: userAgent
+            };
+        }
+
+        // 2. visitor logging
+        async function logVisitorData(data) {
+            if (!db || !userId || !data.ip) return;
+
+            // Private data path: /artifacts/{appId}/users/{userId}/visitor_logs
+            const logCollectionPath = `artifacts/${appId}/users/${userId}/visitor_logs`;
+
+            try {
+                await addDoc(collection(db, logCollectionPath), {
+                    ip: data.ip,
+                    timestamp: serverTimestamp(),
+                    deviceSummary: data.deviceSummary,
+                    browser: data.browser,
+                    city: data.city,
+                    country: data.country,
+                    countryCode: data.countryCode,
+                    isp: data.isp,
+                    hosting: data.hosting,
+                    userAgent: data.userAgent,
+                });
+            } catch (e) {
+                console.error("error logging visitor data:", e);
+            }
+        }
+        
+        // 3. ADMIN LOGIN NOTIFICATION LOGGING (Trigger for external email service)
+        async function logAdminLoginNotification(ip, adminId) {
+            if (!db) return;
+            // Public data path used for cross-session/cross-user events that require a backend trigger
+            const notificationCollectionPath = `artifacts/${appId}/public/data/admin_notifications`;
+            
+            try {
+                await addDoc(collection(db, notificationCollectionPath), {
+                    event: "ADMIN_LOGIN_SUCCESS",
+                    timestamp: serverTimestamp(),
+                    admin_userId: adminId,
+                    ip_at_login: ip || 'unknown',
+                    message: `Admin user logged in at ${new Date().toISOString()}`,
+                    // You would monitor this collection with a Firebase Cloud Function to send the actual email.
+                });
+                console.log("Admin login notification event successfully logged to Firestore.");
+            } catch (e) {
+                console.error("Error logging notification:", e);
+            }
+        }
+
+
+        // 4. history loading (Admin Dashboard)
+        function loadVisitorHistory() {
+            if (!db || !userId) {
+                visitorListBody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-sm text-red-500 italic text-center">database not ready gng.</td></tr>';
+                return;
+            }
+            
+            visitorLogs = {};
+
+            // Private data path: /artifacts/{appId}/users/{userId}/visitor_logs
+            const logCollectionPath = `artifacts/${appId}/users/${userId}/visitor_logs`;
+            const q = collection(db, logCollectionPath);
+
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                
+                const groupedLogs = {};
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const docId = doc.id;
+                    const ip = data.ip;
+                    
+                    if (!ip) return;
+
+                    const time = data.timestamp ? 
+                        new Date(data.timestamp.toDate()).getTime() : 
+                        0;
+
+                    const logEntry = { 
+                        id: docId,
+                        ip: ip, 
+                        time: time, 
+                        deviceSummary: data.deviceSummary || 'N/A', 
+                        browser: data.browser || 'N/A',
+                        city: data.city || 'N/A',
+                        country: data.country || 'N/A',
+                        countryCode: data.countryCode || 'N/A',
+                        isp: data.isp || 'N/A',
+                        hosting: data.hosting || false, 
+                        userAgent: data.userAgent || 'N/A',
+                    };
+                    
+                    visitorLogs[docId] = logEntry;
+                    
+                    if (!groupedLogs[ip]) {
+                        groupedLogs[ip] = {
+                            count: 0,
+                            latestLog: logEntry, 
+                            allLogs: [],
+                        };
+                    }
+
+                    groupedLogs[ip].count++;
+                    groupedLogs[ip].allLogs.push(logEntry);
+
+                    if (time > groupedLogs[ip].latestLog.time) {
+                         groupedLogs[ip].latestLog = logEntry;
+                    }
+                });
+                
+                const finalRenderArray = Object.values(groupedLogs).map(group => {
+                    const log = group.latestLog; 
+                    
+                    const isFlaggedByApi = log.hosting;
+                    const isFlaggedByIsp = isKnownVpnIsp(log.isp);
+                    const isVpn = isFlaggedByApi || isFlaggedByIsp;
+
+                    let vpnStatusText;
+                    if (isVpn) {
+                        vpnStatusText = isFlaggedByIsp ? 'ISP Flagged (Cloud/VPN)' : 'API Flagged (VPN/Proxy)';
+                    } else {
+                        vpnStatusText = 'Clear';
+                    }
+
+                    // Kept colors for vpn status for necessary contrast and info transmission
+                    const vpnStatusClass = isVpn ? 'bg-red-200 text-red-800' : 'bg-green-100 text-green-800';
+                    
+                    const formattedTime = log.time > 0 ? 
+                        new Date(log.time).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'medium' }) : 
+                        'pending...';
+
+                    return {
+                        id: log.id,
+                        ip: log.ip, 
+                        time: formattedTime, 
+                        deviceSummary: log.deviceSummary, 
+                        browser: log.browser,
+                        location: `${log.city || 'N/A'}, ${log.countryCode || 'N/A'}`,
+                        vpnStatusText: vpnStatusText,
+                        vpnStatusClass: vpnStatusClass,
+                        ipCount: group.count,
+                        fullLogData: log
+                    };
+                });
+
+
+                if (finalRenderArray.length === 0) {
+                    visitorListBody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-sm text-gray-500 italic text-center">no visitors have checked in yet.</td></tr>';
+                    return;
+                }
+
+                finalRenderArray.sort((a, b) => {
+                    const timeA = a.fullLogData.time || 0;
+                    const timeB = b.fullLogData.time || 0;
+                    return timeB - timeA;
+                });
+
+                visitorListBody.innerHTML = finalRenderArray.map(log => {
+                    const count = log.ipCount;
+                    // Changed badge color from yellow to black/white for monochrome consistency
+                    const ipBadge = count > 1 ? `<span class="ml-1 px-1 py-0.5 text-xs font-bold rounded-full bg-black text-white shadow-sm">${count}x</span>` : '';
+
+                    return `
+                        <tr class="hover:bg-gray-100 transition duration-150">
+                            <td class="px-2 py-3 whitespace-nowrap font-mono text-sm flex items-center">
+                                ${log.ip}${ipBadge}
+                            </td>
+                            <td class="px-2 py-3 whitespace-nowrap text-sm text-gray-700">${log.location}</td>
+                            <td class="px-2 py-3 whitespace-nowrap text-sm text-gray-700">${log.deviceSummary}</td>
+                            <td class="px-2 py-3 whitespace-nowrap text-xs">
+                                <span class="px-1.5 py-0.5 rounded-md font-semibold ${log.vpnStatusClass}">
+                                    ${log.vpnStatusText}
+                                </span>
+                            </td>
+                            <td class="px-2 py-3 whitespace-nowrap text-xs text-gray-500">${log.time}</td>
+                            <td class="px-2 py-3 whitespace-nowrap">
+                                <button data-log-id="${log.id}" class="open-log-details-button open-button text-xs">
+                                    open info
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.querySelectorAll('.open-log-details-button').forEach(button => {
+                    button.addEventListener('click', (e) => openVisitorDetails(e.target.dataset.logId));
+                });
+
+            }, (error) => {
+                console.error("error fetching visitor history:", error);
+                visitorListBody.innerHTML = '<tr><td colspan="6" class="px-3 py-4 text-sm text-red-500 italic text-center">failed to load history. check console.</td></tr>';
+            });
+        }
+
+        // 5. GEMINI API FUNCTION: IP ANALYSIS
+        async function generateIpAnalysis(log) {
+            analysisOutput.classList.add('hidden');
+            analysisError.classList.add('hidden');
+            analysisLoading.classList.remove('hidden');
+            analyzeIpButton.disabled = true;
+
+            const systemPrompt = `You are a concise cybersecurity analyst. Analyze the provided visitor log details (IP, ISP, Location, VPN Status) and generate a single, short paragraph (under 80 words) providing a risk assessment or characteristics summary. Focus on if the IP seems typical for a residential user or if it shows corporate/VPN/cloud characteristics.`;
+            
+            const userQuery = `Analyze this visitor profile:\nIP Address: ${log.ip}\nISP: ${log.isp}\nLocation: ${log.city}, ${log.country}\nVPN/Hosting Status: ${log.vpnStatusText}\nDevice: ${log.deviceSummary}\nBrowser: ${log.browser}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const maxRetries = 3;
+            let responseText = null;
+
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429 && attempt < maxRetries - 1) {
+                        const delay = Math.pow(2, attempt) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(`API call failed with status: ${response.status}. Body: ${errorBody}`);
+                    }
+
+                    const result = await response.json();
+                    responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    break;
+                } catch (error) {
+                    console.error(`Attempt ${attempt + 1} failed:`, error);
+                    if (attempt === maxRetries - 1) {
+                        analysisError.textContent = `analysis failed: ${error.message.substring(0, 100)}...`;
+                        analysisError.classList.remove('hidden');
+                    }
+                }
+            }
+            
+            analysisLoading.classList.add('hidden');
+            analyzeIpButton.disabled = false;
+
+            if (responseText) {
+                analysisOutput.innerHTML = responseText;
+                analysisOutput.classList.remove('hidden');
+            } else if (!analysisError.classList.contains('hidden')) {
+            } else {
+                 analysisError.textContent = 'analysis failed: API response was empty.';
+                 analysisError.classList.remove('hidden');
+            }
+        }
+        
+        // 6. authentication and initialization
+        async function setupFirebaseAndApp() {
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+            if (!Object.keys(firebaseConfig).length) {
+                console.error("firebase config not found.");
+                return;
+            }
+
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            setLogLevel('Debug'); 
+            
+            await new Promise(resolve => {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        
+                        if (user.isAnonymous) {
+                           // Regular anonymous user, do not show admin dashboard
+                           resetAppState(); 
+                        } else {
+                            // Assumes custom token sign-in is admin (after successful login)
+                            currentUserIdDisplay.textContent = `user id: ${userId}`;
+                            // If the user somehow reloads while being signed in, keep them in admin mode
+                            if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+                                setAdminMode();
+                            }
+                        }
+                        resolve();
+                    } else {
+                        // No user signed in, attempt anonymous sign-in
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined') {
+                                // This block handles the canvas environment initial sign-in
+                                const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                                userId = cred.user.uid;
+                            } else {
+                                // FIX: Completed the signInAnonymously call
+                                const cred = await signInAnonymously(auth); 
+                                userId = cred.user.uid;
+                            }
+                            resolve(); // Resolve promise after successful auth attempt
+                        } catch(e) {
+                             console.error("initial auth failed:", e);
+                             resolve(); // Still resolve so the app can attempt to continue
+                        }
+                    }
+                });
+            });
+
+            // After auth setup, fetch and log visitor data
+            currentVisitorData = await fetchIpAndLocation();
+            if (auth.currentUser && currentVisitorData.ip && auth.currentUser.isAnonymous) {
+                // Only log if anonymous (not admin) and we have an IP
+                await logVisitorData(currentVisitorData);
+            }
+        }
+
+        // 7. handle login attempt
+        async function handleLogin() {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            if (usernameInput.value === adminUser && passwordInput.value === adminPass) {
+                loginError.classList.add('hidden');
+                
+                // 1. Sign in with the custom token (assuming we have a server generating one, otherwise anonymous sign-in is used)
+                // For this example, we assume custom token generation is not possible in this environment, 
+                // so we rely on the canvas environment's token and just set the flag and UI.
+                
+                // In a real environment, you'd call a backend function here to get a token for 'Admin'
+                // For this mock, we sign out anonymous, then sign in with the initial token (which is already done)
+                // and simply track the admin status locally and update the UI.
+                
+                // Mock Admin Sign-in Logic:
+                localStorage.setItem('isAdminLoggedIn', 'true');
+                setAdminMode();
+                
+                // 2. Log the admin login event (for external email trigger)
+                await logAdminLoginNotification(currentVisitorData.ip, auth.currentUser?.uid || 'unknown-admin');
+
+
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        // 8. open visitor details modal
+        function openVisitorDetails(logId) {
+            currentModalLog = visitorLogs[logId];
+            if (!currentModalLog) return;
+
+            // Reset Gemini analysis area
+            analysisOutput.classList.add('hidden');
+            analysisError.classList.add('hidden');
+            analysisLoading.classList.add('hidden');
+            analyzeIpButton.disabled = false;
+            
+            const log = currentModalLog;
+            
+            const vpnStatusClass = log.hosting || isKnownVpnIsp(log.isp) ? 
+                'text-red-600 font-bold' : 'text-green-600 font-bold';
+            
+            const vpnStatusText = log.hosting || isKnownVpnIsp(log.isp) ? 
+                'FLAGGED (VPN/Cloud/Proxy)' : 'Clear';
+
+            modalContent.innerHTML = `
+                <p><strong>ip address:</strong> <span class="font-mono">${log.ip}</span></p>
+                <p><strong>time:</strong> ${new Date(log.time).toLocaleString()}</p>
+                <p><strong>location:</strong> ${log.city}, ${log.country} (${log.countryCode})</p>
+                <p><strong>isp/network:</strong> ${log.isp}</p>
+                <p><strong>vpn status:</strong> <span class="${vpnStatusClass}">${vpnStatusText}</span></p>
+                <p><strong>device:</strong> ${log.deviceSummary}</p>
+                <p><strong>browser:</strong> ${log.browser}</p>
+                <p class="mt-4"><strong>full user agent:</strong> <code class="text-xs break-all block bg-gray-100 p-2 rounded">${log.userAgent}</code></p>
+            `;
+            
+            visitorModal.classList.remove('hidden');
+        }
+
+        // 9. html download functionality
+        function downloadHtml() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ip_checker_tool.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 10. event listeners and initial setup
+        function initializeListeners() {
+            // Login/Logout Handlers
+            showLoginButton.addEventListener('click', () => {
+                loginSection.classList.toggle('hidden');
+                loginError.classList.add('hidden');
+            });
+
+            loginSubmitButton.addEventListener('click', handleLogin);
+            
+            // Logout handler
+            logoutButton.addEventListener('click', async () => {
+                localStorage.removeItem('isAdminLoggedIn');
+                await signOut(auth);
+                resetAppState();
+            });
+
+            // Password toggle
+            togglePasswordButton.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                eyeOnIcon.classList.toggle('hidden');
+                eyeOffIcon.classList.toggle('hidden');
+            });
+            
+            // Modal Handlers
+            closeModalButton.addEventListener('click', () => {
+                visitorModal.classList.add('hidden');
+            });
+
+            // Gemini Handler
+            analyzeIpButton.addEventListener('click', () => {
+                if (currentModalLog) {
+                    generateIpAnalysis(currentModalLog);
+                }
+            });
+
+            // Download Modal Handlers
+            showDownloadModalButton.addEventListener('click', () => {
+                downloadModal.classList.remove('hidden');
+                downloadError.classList.add('hidden');
+                downloadKeyInput.value = '';
+            });
+
+            closeDownloadModalButton.addEventListener('click', () => {
+                downloadModal.classList.add('hidden');
+            });
+
+            submitDownloadButton.addEventListener('click', () => {
+                if (downloadKeyInput.value === downloadPassword) {
+                    downloadError.classList.add('hidden');
+                    downloadModal.classList.add('hidden');
+                    downloadHtml();
+                } else {
+                    downloadError.classList.remove('hidden');
+                }
+            });
+        }
+
+        // 11. initialize on load
+        window.onload = async () => {
+            initializeListeners();
+            await setupFirebaseAndApp();
+            // Check if admin mode should be active after auth is ready
+            if (localStorage.getItem('isAdminLoggedIn') === 'true' && auth.currentUser && !auth.currentUser.isAnonymous) {
+                setAdminMode();
+            } else {
+                resetAppState();
+            }
+        };
+    </script>
+</body>
+</html>
